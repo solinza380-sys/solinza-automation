@@ -18,7 +18,16 @@ KEYWORDS = [
     "cardigan femme oversize",
     "combinaison femme",
     "jupe longue femme",
-]
+ "veste jean femme",
+    "robe fluide femme",
+    "pantalon large femme",
+    "pull oversize femme",
+    "robe pull femme",
+    "trench coat femme",
+    "salopette femme",
+    "kimono femme",
+    "body femme",
+    "maillot bain femme",]
 
 GEO = "FR"
 
