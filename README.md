@@ -1,0 +1,1 @@
+# solinza-automation
