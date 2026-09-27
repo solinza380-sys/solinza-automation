@@ -2,15 +2,13 @@
 cj_product_search.py
 
 Ce script fait deux choses :
-1. Se connecte à l'API CJ Dropshipping (avec email + password + API key
-   stockés dans les GitHub Secrets) pour récupérer un Access Token.
+1. Se connecte à l'API CJ Dropshipping (avec la clé API stockée dans
+   les GitHub Secrets) pour récupérer un Access Token.
 2. Utilise ce token pour chercher des produits correspondant aux
    mots-clés tendance trouvés via Google Trends (robe fluide femme,
    trench coat femme, pull femme col v, etc.).
 
-Variables d'environnement nécessaires (déjà ajoutées dans GitHub Secrets) :
-  - CJ_EMAIL
-  - CJ_PASSWORD
+Variable d'environnement nécessaire (déjà ajoutée dans GitHub Secrets) :
   - CJ_API_KEY
 """
 
@@ -31,19 +29,13 @@ KEYWORDS = [
 
 
 def get_access_token():
-    """Récupère un Access Token CJ Dropshipping."""
+    """Récupère un Access Token CJ Dropshipping (nouvelle API : apiKey seul)."""
     url = f"{CJ_BASE_URL}/authentication/getAccessToken"
     payload = {
-        "email": os.environ["CJ_EMAIL"].strip(),
-        "password": os.environ["CJ_PASSWORD"].strip(),
+        "apiKey": os.environ["CJ_API_KEY"].strip(),
     }
     headers = {
         "Content-Type": "application/json",
-        # Certaines versions de l'API CJ demandent aussi la clé API
-        # dans les headers ; on l'ajoute par sécurité.
-        # .strip() enlève tout espace ou retour à la ligne accidentel
-        # copié depuis l'interface CJ ou GitHub.
-        "CJ-Access-Token": os.environ.get("CJ_API_KEY", "").strip(),
     }
 
     response = requests.post(url, json=payload, headers=headers, timeout=30)
