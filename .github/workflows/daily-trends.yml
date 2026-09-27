@@ -1,0 +1,37 @@
+name: Recherche quotidienne des produits tendance
+
+# Ce workflow exécute automatiquement le script Python chaque jour,
+# sans que tu aies besoin d'ouvrir Codespaces ou de taper une seule commande.
+
+on:
+  schedule:
+    # Tous les jours à 7h00 (heure de Paris, UTC+1/+2 selon la saison)
+    # Le cron s'exprime en UTC : 6h00 UTC = 7h00 Paris (hiver) / 8h00 Paris (été)
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}  # permet aussi de le lancer manuellement depuis GitHub
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code du dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dépendances
+        run: pip install pytrends pandas
+
+      - name: Lancer le script de recherche de tendances
+        run: python trending_products_solinza.py
+
+      - name: Sauvegarder le résultat (commit automatique)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add trending_products.csv
+          git commit -m "Mise à jour automatique des tendances $(date +'%Y-%m-%d')" || echo "Rien à commit"
+          git push
