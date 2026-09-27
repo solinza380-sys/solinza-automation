@@ -1,0 +1,34 @@
+name: Recherche de produits CJ Dropshipping
+
+on:
+  workflow_dispatch:  # permet de le lancer manuellement depuis l'onglet Actions
+  schedule:
+    - cron: "0 7 * * *"  # tous les jours à 7h00 UTC (ajuster si besoin)
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du repo
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dépendances
+        run: pip install requests
+
+      - name: Lancer la recherche CJ Dropshipping
+        env:
+          CJ_EMAIL: ${{ secrets.CJ_EMAIL }}
+          CJ_PASSWORD: ${{ secrets.CJ_PASSWORD }}
+          CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+        run: python cj_product_search.py
+
+      - name: Sauvegarder les résultats comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cj-search-results
+          path: cj_search_results.json
