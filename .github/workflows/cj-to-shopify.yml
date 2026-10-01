@@ -27,10 +27,11 @@ jobs:
 
       - name: Ajouter le produit dans Shopify
         env:
+          CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
           SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
-        run: python shopify_add_product.py
+        run: python shopify_add_product-2.py
 
       - name: Sauvegarder les resultats
         uses: actions/upload-artifact@v4
