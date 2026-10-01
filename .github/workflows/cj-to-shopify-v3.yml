@@ -1,0 +1,32 @@
+name: CJ vers Shopify v3 (test manuel)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du repo
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dependances
+        run: pip install requests
+
+      - name: Recherche CJ Dropshipping
+        env:
+          CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+        run: python cj_product_search.py
+
+      - name: Ajouter le produit dans Shopify (brouillon)
+        env:
+          CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+        run: python shopify_add_product_v3.py
