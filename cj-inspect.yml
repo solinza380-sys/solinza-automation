@@ -1,0 +1,80 @@
+name: CJ inspection (lecture seule)
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspecter un produit CJ
+        env:
+          CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+          CJ_PID: "2609300723281609400"
+        run: |
+          pip install requests -q
+          python - <<'PYEOF'
+          import os, requests
+          BASE = "https://developers.cjdropshipping.com/api2.0/v1"
+          out = ["## Inspection CJ (lecture seule)", ""]
+
+          def log(x):
+              out.append(x)
+
+          def keys(d):
+              return ", ".join(sorted(d.keys())) if isinstance(d, dict) else str(type(d).__name__)
+
+          def get(path, h, params):
+              r = requests.get(f"{BASE}/{path}", headers=h, params=params, timeout=30)
+              return r.json()
+
+          try:
+              r = requests.post(f"{BASE}/authentication/getAccessToken",
+                                json={"apiKey": os.environ["CJ_API_KEY"].strip()}, timeout=30)
+              token = r.json()["data"]["accessToken"]
+              h = {"CJ-Access-Token": token}
+              pid = os.environ["CJ_PID"]
+              log("- Token CJ : OK")
+
+              p = get("product/query", h, {"pid": pid})
+              log(f"### product/query (code {p.get('code')}, {p.get('message')})")
+              d = p.get("data") or {}
+              log(f"- Champs : {keys(d)}")
+              for k, v in d.items():
+                  if "mage" in k.lower() or "variant" in k.lower():
+                      size = len(v) if hasattr(v, "__len__") else "-"
+                      log(f"- {k} : type {type(v).__name__}, taille {size}")
+              log(f"- Matiere : {d.get('materialNameEn')}")
+              log(f"- Poids : {d.get('productWeight')}")
+              log(f"- Longueur description : {len(str(d.get('description') or ''))}")
+
+              variants = []
+              for path in ("product/variant/query", "product/variant/queryByPid"):
+                  v = get(path, h, {"pid": pid})
+                  log(f"### {path} (code {v.get('code')}, {v.get('message')})")
+                  data = v.get("data")
+                  if isinstance(data, list) and data:
+                      variants = data
+                      break
+              log(f"- Nombre de variantes : {len(variants)}")
+              vid = None
+              if variants:
+                  log(f"- Champs variante : {keys(variants[0])}")
+                  for x in variants[:3]:
+                      log(f"- {x.get('variantNameEn')} | prix {x.get('variantSellPrice')} | vid {x.get('vid')}")
+                  vid = variants[0].get("vid")
+
+              if vid:
+                  s = get("product/stock/queryByVid", h, {"vid": vid})
+                  log(f"### stock (code {s.get('code')}, {s.get('message')})")
+                  log(f"- Reponse : {str(s.get('data'))[:300]}")
+                  f = requests.post(f"{BASE}/logistic/freightCalculate", headers=h, json={
+                      "startCountryCode": "CN", "endCountryCode": "FR",
+                      "products": [{"quantity": 1, "vid": vid}]}, timeout=30).json()
+                  log(f"### livraison vers FR (code {f.get('code')}, {f.get('message')})")
+                  log(f"- Reponse : {str(f.get('data'))[:600]}")
+          except Exception as e:
+              log(f"### ❌ Erreur : {e}")
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as fh:
+              fh.write("\n".join(out) + "\n")
+          PYEOF
