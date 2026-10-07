@@ -24,6 +24,7 @@ permissions:
 jobs:
   run-script:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout du repo
         uses: actions/checkout@v4
@@ -42,7 +43,12 @@ jobs:
       - name: Recherche CJ Dropshipping
         env:
           CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
-        run: python cj_product_search.py
+        run: |
+          python cj_product_search.py
+          echo "### CJ API — étape de recherche" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- Requêtes de recherche : 3 mots-clés" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- Appels CJ de cette étape : 4 (1 authentification + 3 recherches)" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- Les appels CJ supplémentaires de l'audit v4 sont plafonnés par MAX_CANDIDATES et MAX_VARIANTS_PER_CANDIDATE." >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Preflight lecture seule + audit v4 (simulation) ou creation du brouillon (apply=true)
         env:
