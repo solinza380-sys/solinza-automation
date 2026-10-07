@@ -1,0 +1,56 @@
+name: CJ vers Shopify v4 (manuel, SIMULATION par défaut)
+
+# Nouveau workflow, indépendant de la v3 : ne remplace ni ne modifie aucun workflow existant.
+# Le produit créé est TOUJOURS en DRAFT (aucune publication automatique).
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Créer réellement le brouillon dans Shopify ? (false = simulation, aucune écriture)"
+        type: boolean
+        default: false
+      max_candidates:
+        description: "MAX_CANDIDATES : candidats audités (défaut 3)"
+        type: string
+        default: "3"
+      max_variants_per_candidate:
+        description: "MAX_VARIANTS_PER_CANDIDATE : variantes auditées par candidat (défaut 12)"
+        type: string
+        default: "12"
+
+permissions:
+  contents: read
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du repo
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dependances
+        run: pip install requests
+
+      - name: Tests hors ligne v4 (aucun appel reseau)
+        run: python -m unittest -v test_shopify_add_product_v4
+
+      - name: Recherche CJ Dropshipping
+        env:
+          CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+        run: python cj_product_search.py
+
+      - name: Preflight lecture seule + audit v4 (simulation) ou creation du brouillon (apply=true)
+        env:
+          CJ_API_KEY: ${{ secrets.CJ_API_KEY }}
+          SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          APPLY: ${{ inputs.apply && '1' || '0' }}
+          MAX_CANDIDATES: ${{ inputs.max_candidates }}
+          MAX_VARIANTS_PER_CANDIDATE: ${{ inputs.max_variants_per_candidate }}
+        run: python shopify_add_product_v4.py
